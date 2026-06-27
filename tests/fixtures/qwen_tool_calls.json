@@ -1,0 +1,46 @@
+{
+  "id": "chatcmpl-qwen-7d6e5f4a3b2c1d0e9f8a7b6c",
+  "object": "chat.completion",
+  "created": 1735689700,
+  "model": "qwen-plus",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "id": "tool-1",
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": {
+                "location": "Shanghai",
+                "unit": "celsius"
+              }
+            }
+          },
+          {
+            "id": "tool-2",
+            "type": "function",
+            "function": {
+              "name": "get_forecast",
+              "arguments": {
+                "location": "Shanghai",
+                "days": "3"
+              }
+            }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 221,
+    "completion_tokens": 58,
+    "total_tokens": 279
+  }
+}

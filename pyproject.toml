@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tooldrift"
+version = "0.1.0"
+description = "Per-provider tool-call contract regression sentinel for Chinese LLMs (DeepSeek/Qwen/Kimi/GLM/MiniMax)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "SuperMarioYL" }]
+keywords = [
+    "llm",
+    "tool-calling",
+    "function-calling",
+    "regression",
+    "deepseek",
+    "qwen",
+    "kimi",
+    "glm",
+    "minimax",
+    "agent",
+    "ci",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "build>=1.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/SuperMarioYL/tooldrift"
+Repository = "https://github.com/SuperMarioYL/tooldrift"
+Issues = "https://github.com/SuperMarioYL/tooldrift/issues"
+
+[project.scripts]
+tooldrift = "tooldrift.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tooldrift"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/tooldrift", "examples", "README.md", "LICENSE"]

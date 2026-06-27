@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360"
+     font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+     role="img" aria-label="架构：suite.yaml → probe 两家 provider → 归一化契约快照 → diff → 红绿 CI 退出码">
+  <defs>
+    <marker id="ah-d" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#5A5A66"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="360" rx="18" fill="#1D1D1F"/>
+
+  <text x="40" y="44" font-size="15" font-weight="700" fill="#F5F5F7">ToolDrift · 单进程 CLI — 只探测、永不代理业务流量</text>
+
+  <g stroke="#3A3A44" stroke-width="1.5" fill="none">
+    <line x1="172" y1="120" x2="232" y2="96"  marker-end="url(#ah-d)"/>
+    <line x1="172" y1="120" x2="232" y2="232" marker-end="url(#ah-d)"/>
+    <line x1="392" y1="96"  x2="452" y2="96"  marker-end="url(#ah-d)"/>
+    <line x1="392" y1="232" x2="452" y2="232" marker-end="url(#ah-d)"/>
+    <line x1="600" y1="96"  x2="654" y2="150" marker-end="url(#ah-d)"/>
+    <line x1="600" y1="232" x2="654" y2="186" marker-end="url(#ah-d)"/>
+  </g>
+
+  <g>
+    <rect x="32" y="86" width="140" height="68" rx="15" fill="#4DA3FF" fill-opacity="0.16" stroke="#4DA3FF" stroke-width="1.5"/>
+    <text x="102" y="116" text-anchor="middle" font-size="14" font-weight="600" fill="#9CC9FF">suite.weather.yaml</text>
+    <text x="102" y="136" text-anchor="middle" font-size="11" fill="#A1A1A8">prompt + 工具定义</text>
+  </g>
+
+  <g>
+    <rect x="232" y="64" width="160" height="64" rx="15" fill="#8985FF" fill-opacity="0.16" stroke="#8985FF" stroke-width="1.5"/>
+    <text x="312" y="90" text-anchor="middle" font-size="13" font-weight="600" fill="#B7B4FF">probe · old</text>
+    <text x="312" y="110" text-anchor="middle" font-size="11" fill="#A1A1A8">DeepSeek /chat/completions</text>
+  </g>
+  <g>
+    <rect x="232" y="200" width="160" height="64" rx="15" fill="#8985FF" fill-opacity="0.16" stroke="#8985FF" stroke-width="1.5"/>
+    <text x="312" y="226" text-anchor="middle" font-size="13" font-weight="600" fill="#B7B4FF">probe · new</text>
+    <text x="312" y="246" text-anchor="middle" font-size="11" fill="#A1A1A8">Qwen /chat/completions</text>
+  </g>
+
+  <g>
+    <rect x="452" y="64" width="148" height="64" rx="15" fill="#2DC79A" fill-opacity="0.16" stroke="#2DC79A" stroke-width="1.5"/>
+    <text x="526" y="90" text-anchor="middle" font-size="13" font-weight="600" fill="#6FE0BF">ContractSnapshot</text>
+    <text x="526" y="110" text-anchor="middle" font-size="11" fill="#A1A1A8">归一化 · 落 JSON</text>
+  </g>
+  <g>
+    <rect x="452" y="200" width="148" height="64" rx="15" fill="#2DC79A" fill-opacity="0.16" stroke="#2DC79A" stroke-width="1.5"/>
+    <text x="526" y="226" text-anchor="middle" font-size="13" font-weight="600" fill="#6FE0BF">ContractSnapshot</text>
+    <text x="526" y="246" text-anchor="middle" font-size="11" fill="#A1A1A8">归一化 · 落 JSON</text>
+  </g>
+
+  <g>
+    <rect x="654" y="132" width="100" height="72" rx="15" fill="#4DA3FF" fill-opacity="0.16" stroke="#4DA3FF" stroke-width="1.5"/>
+    <text x="704" y="166" text-anchor="middle" font-size="14" font-weight="700" fill="#9CC9FF">diff()</text>
+    <text x="704" y="186" text-anchor="middle" font-size="10.5" fill="#A1A1A8">纯函数 · 逐字段</text>
+  </g>
+
+  <g stroke="#3A3A44" stroke-width="1.5" fill="none">
+    <line x1="754" y1="168" x2="800" y2="168" marker-end="url(#ah-d)"/>
+  </g>
+  <g>
+    <rect x="788" y="86" width="60" height="38" rx="10" fill="#2DC79A" fill-opacity="0.20" stroke="#2DC79A" stroke-width="1.5"/>
+    <text x="818" y="110" text-anchor="middle" font-size="12" font-weight="700" fill="#6FE0BF">✓ 0</text>
+    <rect x="788" y="210" width="60" height="38" rx="10" fill="#FF6369" fill-opacity="0.20" stroke="#FF6369" stroke-width="1.5"/>
+    <text x="818" y="234" text-anchor="middle" font-size="12" font-weight="700" fill="#FF8A8E">✗ 1</text>
+    <line x1="818" y1="124" x2="818" y2="210" stroke="#3A3A44" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="818" y="178" text-anchor="middle" font-size="10.5" font-weight="600" fill="#A1A1A8">CI exit</text>
+  </g>
+
+  <text x="40" y="328" font-size="11.5" fill="#A1A1A8">归一化字段：arg_keys · arg_nesting · arguments_encoding(object|json_string) · parallel_arity · tool_call_id_format · finish_reason</text>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300"
+     font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+     role="img" aria-label="ToolDrift — 国产模型 tool-call 契约回归哨兵">
+  <defs>
+    <linearGradient id="hd-word" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4DA3FF"/>
+      <stop offset="0.55" stop-color="#8985FF"/>
+      <stop offset="1" stop-color="#2DC79A"/>
+    </linearGradient>
+    <linearGradient id="hd-sweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2DC79A"/>
+      <stop offset="0.5" stop-color="#4DA3FF"/>
+      <stop offset="1" stop-color="#FF6369"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="880" height="300" rx="20" fill="#1D1D1F"/>
+
+  <!-- left: red→green contract gate motif -->
+  <g transform="translate(56,70)">
+    <rect x="0" y="0" width="150" height="160" rx="16" fill="#4DA3FF" fill-opacity="0.12" stroke="#3A3A44" stroke-width="1.5"/>
+    <text x="75" y="26" text-anchor="middle" font-size="11" font-weight="600" fill="#A1A1A8" letter-spacing="1">tool_calls</text>
+    <g transform="translate(18,46)">
+      <circle cx="8" cy="8" r="8" fill="#2DC79A"/>
+      <path d="M4,8 L7,11 L12,5" stroke="#1D1D1F" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="26" y="12" font-size="12" font-weight="500" fill="#2DC79A">get_weather  ✓</text>
+    </g>
+    <g transform="translate(18,82)">
+      <circle cx="8" cy="8" r="8" fill="#FF6369"/>
+      <path d="M5,5 L11,11 M11,5 L5,11" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="26" y="12" font-size="12" font-weight="500" fill="#FF6369">get_forecast ✗</text>
+    </g>
+    <g transform="translate(18,116)">
+      <rect x="0" y="0" width="114" height="22" rx="6" fill="#FF6369" fill-opacity="0.18"/>
+      <text x="57" y="15" text-anchor="middle" font-size="10.5" font-weight="600" fill="#FF8A8E">exit 1 · drift</text>
+    </g>
+  </g>
+
+  <!-- right: wordmark + tagline -->
+  <g transform="translate(248,0)">
+    <text x="0" y="138" font-size="68" font-weight="800" letter-spacing="-1.5" fill="url(#hd-word)">ToolDrift</text>
+    <rect x="2" y="158" width="430" height="4" rx="2" fill="url(#hd-sweep)"/>
+    <text x="2" y="196" font-size="20" font-weight="600" fill="#F5F5F7">国产模型 tool-call 契约回归哨兵</text>
+    <text x="2" y="226" font-size="14" font-weight="400" fill="#A1A1A8">DeepSeek · Qwen · Kimi · GLM · MiniMax — 换模型前先在 CI 里红灯</text>
+  </g>
+</svg>

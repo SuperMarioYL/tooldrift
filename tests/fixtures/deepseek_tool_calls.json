@@ -1,0 +1,40 @@
+{
+  "id": "chatcmpl-8f3a1c2d4e5b6a7c8d9e0f1a2b3c4d5e",
+  "object": "chat.completion",
+  "created": 1735689600,
+  "model": "deepseek-chat",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_0_9a8b7c6d5e4f3a2b1c0d9e8f",
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\"location\": \"Shanghai, CN\", \"unit\": \"celsius\"}"
+            }
+          },
+          {
+            "id": "call_1_1a2b3c4d5e6f7a8b9c0d1e2f",
+            "type": "function",
+            "function": {
+              "name": "get_forecast",
+              "arguments": "{\"location\": \"Shanghai, CN\", \"days\": 3, \"unit\": \"celsius\", \"include\": {\"precipitation\": true, \"wind\": false}}"
+            }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 218,
+    "completion_tokens": 64,
+    "total_tokens": 282
+  }
+}

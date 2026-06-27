@@ -1,0 +1,74 @@
+# contract.yaml
+# A ToolDrift contract definition. It declares the providers under test
+# (base_url + model_id), points at the tool suite to probe with, and pins the
+# normalized tool-call contract that each provider is expected to honour.
+#
+#   tooldrift run --contract examples/contract.yaml --base deepseek --base qwen
+#
+# `tooldrift run` probes the named --base providers, normalizes their tool_calls
+# into a ContractSnapshot, and diffs them against each other (and, when
+# `expected` is present below, against the pinned contract). Drift => non-zero
+# exit so it red-lights CI.
+#
+# No API key on hand? Every command also accepts --from-fixtures to replay the
+# offline samples under tests/fixtures/ so you can see red/green with zero setup.
+
+version: 1
+suite: examples/suite.weather.yaml
+
+# Providers under test. API keys are read from the env var named in `api_key_env`
+# — keys are NEVER written into this file or any snapshot. ToolDrift only reads
+# these endpoints; it never proxies traffic through them.
+providers:
+  deepseek:
+    base_url: https://api.deepseek.com/v1
+    model_id: deepseek-chat
+    api_key_env: DEEPSEEK_API_KEY
+
+  qwen:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model_id: qwen-plus
+    api_key_env: DASHSCOPE_API_KEY
+
+  kimi:
+    base_url: https://api.moonshot.cn/v1
+    model_id: moonshot-v1-8k
+    api_key_env: MOONSHOT_API_KEY
+
+  glm:
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    model_id: glm-4-plus
+    api_key_env: ZHIPUAI_API_KEY
+
+  minimax:
+    base_url: https://api.minimaxi.com/v1
+    model_id: MiniMax-M2
+    api_key_env: MINIMAX_API_KEY
+
+# Optional: the pinned contract each tool's tool_calls is expected to satisfy.
+# This is the same shape `tooldrift snapshot` emits, so you can freeze a known-
+# good snapshot here and let `tooldrift run` regress every provider against it.
+# Omit this block to run a pure cross-provider equivalence check instead.
+expected:
+  get_weather:
+    emitted: true
+    arg_keys: [location, unit]
+    arg_nesting:
+      location: string
+      unit: string
+    arguments_encoding: json_string   # OpenAI-style: arguments is a JSON-encoded string
+    parallel_arity: 1
+    tool_call_id_format: openai
+    finish_reason: tool_calls
+  get_forecast:
+    emitted: true
+    arg_keys: [days, include, location, unit]
+    arg_nesting:
+      location: string
+      days: integer
+      unit: string
+      include: object
+    arguments_encoding: json_string
+    parallel_arity: 1
+    tool_call_id_format: openai
+    finish_reason: tool_calls

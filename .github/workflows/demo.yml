@@ -1,0 +1,44 @@
+name: demo
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  vhs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The tape calls the real `tooldrift` binary, so install the package first.
+      - name: Install tooldrift
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      # vhs-action's self-install of ffmpeg is flaky on GH runners — pre-install it.
+      - name: Pre-install ffmpeg + ttyd
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg ttyd
+
+      - name: Render demo.gif
+        uses: charmbracelet/vhs-action@v2
+        with:
+          path: docs/demo.tape
+          install-fonts: true
+
+      - name: Commit rendered gif
+        run: |
+          git config user.name  "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git add assets/demo.gif
+          git commit -m "chore: render demo gif" || { echo "no change"; exit 0; }
+          git push origin HEAD:main
