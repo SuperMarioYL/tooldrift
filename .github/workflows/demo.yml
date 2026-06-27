@@ -1,9 +1,11 @@
 name: demo
 
+# Manual-only: the committed assets/demo.gif is the source of truth. Run this
+# workflow by hand (Actions → demo → Run workflow) to re-render it from
+# docs/demo.tape. It is NOT triggered on tag push, so a release can never be
+# blocked by a flaky demo render.
 on:
   workflow_dispatch: {}
-  push:
-    tags: ["v*.*.*"]
 
 permissions:
   contents: write
@@ -19,26 +21,33 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The tape calls the real `tooldrift` binary, so install the package first.
+      # The tape drives the real `tooldrift` binary, so install the package first.
       - name: Install tooldrift
         run: |
           python -m pip install --upgrade pip
           pip install -e .
 
-      # vhs-action's self-install of ffmpeg is flaky on GH runners — pre-install it.
-      - name: Pre-install ffmpeg + ttyd
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg ttyd
+      # Install vhs + its deps deterministically from the charm apt repo + ubuntu.
+      # (charmbracelet/vhs-action@v2 self-installs ffmpeg and that step is flaky on
+      # current runners — "Failed to install ffmpeg" — so we install everything via
+      # apt instead and call vhs directly.)
+      - name: Install vhs + ttyd + ffmpeg
+        run: |
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" \
+            | sudo tee /etc/apt/sources.list.d/charm.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y vhs ttyd ffmpeg
 
       - name: Render demo.gif
-        uses: charmbracelet/vhs-action@v2
-        with:
-          path: docs/demo.tape
-          install-fonts: true
+        run: vhs docs/demo.tape
 
       - name: Commit rendered gif
         run: |
           git config user.name  "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
           git add assets/demo.gif
-          git commit -m "chore: render demo gif" || { echo "no change"; exit 0; }
-          git push origin HEAD:main
+          git diff --cached --quiet && { echo "no change to demo.gif"; exit 0; }
+          git commit -m "chore: render demo gif"
+          git push origin HEAD:${{ github.ref_name }}

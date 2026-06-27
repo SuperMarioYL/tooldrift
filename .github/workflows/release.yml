@@ -37,13 +37,19 @@ jobs:
           name: dist
           path: dist/*
 
-  # Optional: PyPI trusted publishing. Configure a Trusted Publisher for
-  # github.com/SuperMarioYL/tooldrift on PyPI, then this job ships on tag.
+  # Optional: PyPI trusted publishing. OFF by default so a fresh repo doesn't fail
+  # the release run before PyPI is set up. To enable:
+  #   1. On pypi.org, add a Trusted Publisher for project "tooldrift":
+  #      owner=SuperMarioYL, repo=tooldrift, workflow=release.yml, environment=pypi
+  #   2. In this repo, set an Actions *variable* PYPI_PUBLISH=true
+  #      (Settings → Secrets and variables → Actions → Variables).
+  # Until then this job is skipped (no failed "pypi" deployment); the build job
+  # above still produces the wheel/sdist artifacts.
   pypi:
     name: publish to PyPI
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PYPI_PUBLISH == 'true'
     environment: pypi
     permissions:
       id-token: write
