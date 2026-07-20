@@ -11,7 +11,7 @@
 <p align="center"><sub>国产模型 tool-call 契约回归哨兵：换 DeepSeek / Qwen / Kimi / GLM / MiniMax 前，CI 先红灯告诉你哪个工具的 schema 不再等价。</sub></p>
 
 <p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-0071E3.svg" alt="License: MIT"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-0071E3.svg" alt="License: Apache-2.0"></a>
   <a href="https://github.com/SuperMarioYL/tooldrift/releases"><img src="https://img.shields.io/github/v/release/SuperMarioYL/tooldrift?color=5E5CE6" alt="Latest release"></a>
   <a href="https://github.com/SuperMarioYL/tooldrift/actions/workflows/tooldrift.yml"><img src="https://img.shields.io/github/actions/workflow/status/SuperMarioYL/tooldrift/tooldrift.yml?branch=main&label=CI" alt="CI status"></a>
   <img src="https://img.shields.io/badge/python-3.12-3776AB.svg" alt="Python 3.12">
