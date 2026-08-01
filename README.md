@@ -131,6 +131,14 @@ tooldrift diff snapshots/deepseek.json snapshots/qwen.json
 # 3) run —— 一行式 CI 入口：探测 old vs new、比对、红绿报告 + 退出码
 tooldrift run --old deepseek --new qwen --suite examples/suite.weather.yaml
 
+# 3b) run --contract —— 加载 contract.yaml（声明 provider + 可选 pinned `expected` 契约），
+#     探测 --base 各家、两两比对 AND 各自回归到 pinned 契约，任一漂移即非零退出
+tooldrift run --contract examples/contract.yaml --base deepseek --base qwen --from-fixtures
+
+# 任意 run / diff 都可加 --format json，输出机器可读的 ContractDiff JSON，
+# 供 CI 与托管的 drift-watch 看板直接解析（不再是终端色块）
+tooldrift diff snapshots/deepseek.json snapshots/qwen.json --format json
+
 # 4) compare-table —— 跨五家产出可传播的 Markdown 对比表
 tooldrift compare-table --from-fixtures -o COMPARISON.md
 ```

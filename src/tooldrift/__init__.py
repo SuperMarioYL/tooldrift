@@ -10,6 +10,6 @@ It is a *detector*, not a router: it never proxies business traffic and never
 rewrites requests.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = ["__version__"]

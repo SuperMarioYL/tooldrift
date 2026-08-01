@@ -122,8 +122,10 @@ def snapshot_from_response(
 def load_fixture(path: str | Path) -> dict[str, Any]:
     """Load a saved raw /chat/completions response JSON for offline replay."""
     p = Path(path)
-    if not p.exists():
-        raise ProbeError(f"fixture not found: {p}")
+    if not p.is_file():
+        # is_file (not exists) so a directory or a missing file both raise a clean
+        # ProbeError instead of crashing with IsADirectoryError / FileNotFoundError.
+        raise ProbeError(f"fixture not found (expected a JSON file): {p}")
     return json.loads(p.read_text(encoding="utf-8"))
 
 

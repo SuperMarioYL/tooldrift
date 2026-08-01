@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tooldrift"
-version = "0.1.0"
+version = "0.2.0"
 description = "Per-provider tool-call contract regression sentinel for Chinese LLMs (DeepSeek/Qwen/Kimi/GLM/MiniMax)."
 readme = "README.md"
 requires-python = ">=3.12"

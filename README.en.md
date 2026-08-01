@@ -131,6 +131,15 @@ tooldrift diff snapshots/deepseek.json snapshots/qwen.json
 # 3) run — the one-line CI entry: probe old vs new, diff, red/green report + exit code
 tooldrift run --old deepseek --new qwen --suite examples/suite.weather.yaml
 
+# 3b) run --contract — load a contract.yaml (declares providers + optional pinned `expected`
+#     contract), probe each --base provider, diff them pairwise AND regress each against the
+#     pinned contract; any drift exits non-zero
+tooldrift run --contract examples/contract.yaml --base deepseek --base qwen --from-fixtures
+
+# Any run / diff accepts --format json — emit a machine-readable ContractDiff JSON that CI
+# and the hosted drift-watch board can parse directly (no terminal-colour scraping)
+tooldrift diff snapshots/deepseek.json snapshots/qwen.json --format json
+
 # 4) compare-table — produce a shareable Markdown comparison across five providers
 tooldrift compare-table --from-fixtures -o COMPARISON.md
 ```
