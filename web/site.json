@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "name": "tooldrift",
+  "github": "https://github.com/SuperMarioYL/tooldrift",
+  "host": "tooldrift.lei6393.com",
+  "lang": { "primary": "zh", "toggle": true },
+  "accent": ["#2dd4bf"],
+  "hero": {
+    "eyebrow": { "zh": "离线可跑 · 零 API key · CI 就绪", "en": "Runs offline · zero API key · CI-ready" },
+    "headline": {
+      "zh": "把『换完模型才发现工具调坏』\n提前成切换前的一次红灯",
+      "en": "Turn 'tool-calls broke after the swap'\ninto a red light before you switch"
+    },
+    "sub": {
+      "zh": "用同一份工具套件分别打五家国产模型的 /chat/completions，把每家吐 tool_calls 的形状归一化成契约快照，逐字段比对，漂移即非零退出——直接挂进 CI。",
+      "en": "Send one tool suite to each Chinese model's /chat/completions, normalize every tool_calls shape into a contract snapshot, diff field-by-field, and exit non-zero on drift — drop it straight into CI."
+    },
+    "command": "tooldrift run --old deepseek --new qwen --from-fixtures",
+    "cta": { "zh": "开始使用", "en": "Get started" },
+    "ctaGithub": { "zh": "在 GitHub 查看", "en": "View on GitHub" }
+  },
+  "advantages": [
+    {
+      "title": { "zh": "切换前红灯，而不是上线后才发现", "en": "A red light before the swap, not a breakage in production" },
+      "body": {
+        "zh": "换模型最怕的是 function-calling 静默坏掉——agent 跑到一半才发现某个工具不调用了。ToolDrift 把这条检测提前到 CI：契约一变就红灯、非零退出，挡住一次有问题的迁移。",
+        "en": "The scariest part of a model swap is function-calling breaking silently — you only find out mid-agent that a tool stopped firing. ToolDrift moves that check into CI: the moment the contract changes, it red-lights and exits non-zero, blocking a bad migration."
+      },
+      "chips": [
+        "› 逐字段比对 tool_calls 形状",
+        "› 漂移即非零退出码",
+        "› Field-by-field tool_calls diff",
+        "› Non-zero exit on any drift"
+      ]
+    },
+    {
+      "title": { "zh": "精确指出哪一处变了，而不是笼统报错", "en": "Pinpoints the exact field that changed, not a vague failure" },
+      "body": {
+        "zh": "arguments 从 JSON 字符串变成对象、参数键被丢或改名、并行调用数变了、finish_reason 取值不同——每一处漂移都列出字段、旧值→新值、为什么这会让调用方崩。",
+        "en": "arguments flipping from a JSON string to an object, an argument key dropped or renamed, parallel-call count shifting, finish_reason landing on a different value — every drift lists the field, old→new value, and why that breaks a downstream caller."
+      },
+      "chips": [
+        "› arguments 编码漂移",
+        "› 参数键 / 类型 / 并行数",
+        "› arguments encoding drift",
+        "› arg keys / types / arity"
+      ]
+    },
+    {
+      "title": { "zh": "零 API key 也能先看到红绿", "en": "See red/green with zero API keys" },
+      "body": {
+        "zh": "拿不到五家的 key 也不卡住：所有命令支持 --from-fixtures，回放离线样本就能演示一次 DeepSeek→通义的契约漂移，十分钟装好即见红绿。",
+        "en": "No keys for all five? Not blocked: every command supports --from-fixtures, replaying offline samples to demo a DeepSeek→Qwen contract drift — install in ten minutes and see red/green."
+      },
+      "chips": [
+        "› --from-fixtures 离线回放",
+        "› 跨五家 Markdown 对比表",
+        "› --from-fixtures offline replay",
+        "› Five-provider Markdown table"
+      ]
+    },
+    {
+      "title": { "zh": "一份契约文件锁定期望，每次回归对账", "en": "Pin the expected contract once, regress every swap against it" },
+      "body": {
+        "zh": "在 contract.yaml 里写死期望的 tool_calls 形状，每次切换都把实测契约和它对账；还能输出机器可读的 JSON diff，喂给 CI 和未来的漂移看板。",
+        "en": "Pin the expected tool_calls shape in a contract.yaml and reconcile every swap against it; also emit a machine-readable JSON diff to feed CI and a future drift-watch board."
+      },
+      "chips": [
+        "› contract.yaml 锁定期望契约",
+        "› --format json 机器可读 diff",
+        "› pinned expected-contract regression",
+        "› machine-readable JSON diff"
+      ]
+    }
+  ],
+  "scene": { "kind": "hub-nodes", "nodes": ["DeepSeek", "Qwen", "Kimi", "GLM", "MiniMax"] },
+  "cta": {
+    "headline": { "zh": "下次换模型前，先跑一次", "en": "Before the next model swap, run it once" },
+    "sub": { "zh": "一条命令，把 function-calling 漂移提前成切换前的红灯。", "en": "One command turns function-calling drift into a red light before the switch." },
+    "button": { "zh": "在 GitHub 开始", "en": "Get started on GitHub" }
+  },
+  "footer": { "tag": { "zh": "Apache-2.0 · 开源核心，CLI 永久免费", "en": "Apache-2.0 · open core, CLI free forever" } }
+}
