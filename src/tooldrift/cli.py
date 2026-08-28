@@ -24,6 +24,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from . import __version__
+from . import _bundled
 from .contract import ArgumentsEncoding, ContractSnapshot
 from .contract_file import ContractFile, ContractFileError
 from .diff import ContractDiff, diff as diff_snapshots
@@ -47,12 +48,15 @@ app = typer.Typer(
 console = Console()
 err_console = Console(stderr=True)
 
-# Default suite shipped with the repo, used when --suite is omitted.
-_DEFAULT_SUITE = "examples/suite.weather.yaml"
-# Built-in offline fixtures, by provider, for --from-fixtures.
+# Default suite shipped with the package, used when --suite is omitted. Resolved
+# relative to the package (tooldrift/_data/), not the process CWD, so an installed
+# user running from any directory still gets the zero-key demo.
+_DEFAULT_SUITE = _bundled.default_suite_path()
+# Built-in offline fixtures, by provider, for --from-fixtures. The files live
+# inside the package (tooldrift/_data/fixtures/) so they resolve from any CWD.
 _FIXTURES = {
-    "deepseek": "tests/fixtures/deepseek_tool_calls.json",
-    "qwen": "tests/fixtures/qwen_tool_calls.json",
+    "deepseek": "deepseek_tool_calls.json",
+    "qwen": "qwen_tool_calls.json",
 }
 
 
@@ -70,17 +74,18 @@ def _resolve_fixture(provider: str, fixture: Optional[Path]) -> Path:
     provider has no built-in fixture (kimi/glm/minimax etc.) — so the user gets
     the documented "no built-in fixture" message + exit 2 instead of an
     ``IsADirectoryError`` crash. Shared by ``snapshot``/``run``/``compare-table``
-    so the three paths can never diverge again.
+    so the three paths can never diverge again. Built-in fixtures resolve
+    through the package bundler so they work from any CWD.
     """
     if fixture is not None:
         return fixture
-    builtin = _FIXTURES.get(provider, "")
-    if not builtin:
+    filename = _FIXTURES.get(provider)
+    if not filename:
         raise ProbeError(
             f"no built-in fixture for provider '{provider}'. "
             f"Pass --fixture PATH. Built-in fixtures: {', '.join(_FIXTURES)}."
         )
-    return Path(builtin)
+    return _bundled.builtin_fixture_path(filename)
 
 
 def _emit_diffs(
@@ -132,7 +137,7 @@ def _main(
     """ToolDrift — detect tool-call contract drift across Chinese LLM providers."""
 
 
-def _render_snapshot(snapshot: ContractSnapshot) -> None:
+def _render_snapshot(snapshot: ContractSnapshot, *, console: Console) -> None:
     """Pretty-print a snapshot's per-tool contract as a rich table."""
     table = Table(
         title=f"[bold]{snapshot.provider}[/] · {snapshot.model_id} · suite={snapshot.suite}",
@@ -259,7 +264,7 @@ def snapshot(
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json_text, encoding="utf-8")
         if not quiet:
-            _render_snapshot(snap)
+            _render_snapshot(snap, console=console)
             console.print(
                 Panel.fit(
                     f"snapshot written → [bold]{output}[/]"
@@ -269,7 +274,9 @@ def snapshot(
             )
     else:
         if not quiet:
-            _render_snapshot(snap)
+            # The human table is decoration; send it to stderr so stdout stays
+            # pure, pipeable JSON (`tooldrift snapshot ... | jq` works).
+            _render_snapshot(snap, console=err_console)
         # JSON to stdout so it can be piped/redirected even without -o.
         console.print(json_text, end="", soft_wrap=True, highlight=False)
 

@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-29
+
+Iteration release. Three post-ship defect fixes on the documented happy paths,
+all found by reading the shipped v0.2.0 source (the repo ships cold: 0 open
+issues).
+
+### Fixed
+
+- **m5 — `probe_live` non-JSON 200-OK crash**: `probe_live` called `resp.json()`
+  inside a try whose except clauses caught only `httpx` exceptions, so a provider
+  (or the reverse-proxy / WAF in front of it) returning HTTP 200 with a non-JSON
+  body (an HTML error page, a truncated payload, a 200-wrapped gateway error)
+  crashed the CLI with a raw `json.JSONDecodeError` traceback instead of the
+  documented clean `ProbeError` + exit 2 every other network failure produced.
+  A `ValueError` (covers `json.JSONDecodeError`) branch now converts it to a
+  clean `ProbeError` carrying the HTTP status and a body snippet. Covered by
+  `tests/test_probe_live_nonjson.py`.
+- **m6 — `snapshot` stdout is clean pipeable JSON**: with no `--output`,
+  `tooldrift snapshot` printed the human-readable rich table to stdout ahead of
+  the snapshot JSON, so `tooldrift snapshot ... | jq` (or `| python -m
+  json.tool`) failed — contradicting the inline doc that claimed stdout was
+  pipeable. The table now goes to stderr, leaving stdout as pure JSON; the
+  `--output` and `--quiet` paths are unchanged. Covered by
+  `tests/test_snapshot_stdout.py`.
+- **m7 — bundle the default suite + built-in fixtures in the package**:
+  `_DEFAULT_SUITE` and `_FIXTURES` were CWD-relative paths and the wheel shipped
+  neither `examples/` nor `tests/`, so an installed user running the documented
+  zero-key demo `tooldrift snapshot --provider deepseek --from-fixtures` from any
+  non-repo directory hit "could not load suite" before seeing a red/green result.
+  The default suite and the two built-in fixtures now ship as package data under
+  `tooldrift/_data/` and resolve relative to the package, so the demo works from
+  any CWD. Covered by `tests/test_bundled_resources.py`.
+
 ## [0.2.0] - 2026-08-02
 
 Iteration release. Closes two shipped-source defects and adds the
@@ -70,6 +103,7 @@ model/version swap with a CI-ready exit code.
   READMEs (Chinese primary + `README.en.md`). The OSS-core / hosted
   drift-watch monetization seam is documented but not implemented.
 
-[Unreleased]: https://github.com/SuperMarioYL/tooldrift/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SuperMarioYL/tooldrift/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SuperMarioYL/tooldrift/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuperMarioYL/tooldrift/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuperMarioYL/tooldrift/releases/tag/v0.1.0

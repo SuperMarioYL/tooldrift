@@ -195,6 +195,18 @@ def probe_live(
         ) from exc
     except httpx.HTTPError as exc:
         raise ProbeError(f"{provider.key} request failed: {exc}") from exc
+    except ValueError as exc:
+        # resp.json() raises json.JSONDecodeError (a ValueError) when a provider
+        # or a reverse-proxy/WAF returns HTTP 200 with a non-JSON body (an HTML
+        # error page, a truncated payload, a 200-wrapped gateway error). It is
+        # not an httpx exception, so without this branch it would crash the CLI
+        # with a raw traceback instead of the clean ProbeError + exit 2 every
+        # other network failure produces. `resp` is bound here: to reach
+        # resp.json(), the post + raise_for_status above must have succeeded.
+        raise ProbeError(
+            f"{provider.key} returned a non-JSON response (HTTP {resp.status_code}): "
+            f"{resp.text[:200]}"
+        ) from exc
     finally:
         if owns_client:
             http.close()

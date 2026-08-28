@@ -1,0 +1,80 @@
+# suite.weather.yaml
+# A ToolDrift tool/function suite. This is the *input* ToolDrift sends to each
+# provider's OpenAI-compatible /chat/completions: a system + user prompt plus a
+# set of JSON-schema tool (function) definitions. ToolDrift then captures the
+# tool_calls each provider emits and normalizes them into a ContractSnapshot.
+#
+# The prompt is intentionally written to force *parallel* tool calls (current
+# weather + a multi-day forecast) so the snapshot exercises parallel-call arity.
+
+name: weather
+description: >-
+  Probes whether a provider emits an equivalent tool_calls contract for a
+  two-tool weather agent (current conditions + multi-day forecast).
+
+# Sent verbatim as the chat messages. ToolDrift never edits these between
+# providers — identical input is the whole point of a contract-equivalence test.
+messages:
+  - role: system
+    content: >-
+      You are a travel assistant with access to weather tools. When the user
+      asks about the weather, you MUST call the appropriate tools to fetch live
+      data before answering. Prefer calling get_weather for current conditions
+      and get_forecast for any multi-day outlook. Do not answer from memory.
+  - role: user
+    content: >-
+      I'm flying to Shanghai tomorrow and staying for three days. What's the
+      weather like there right now, and what's the 3-day forecast?
+
+# Force the model to actually emit tool_calls rather than chat back.
+tool_choice: auto
+
+# OpenAI-compatible function/tool definitions with JSON-schema parameters.
+tools:
+  - type: function
+    function:
+      name: get_weather
+      description: Get the current weather conditions for a single location.
+      parameters:
+        type: object
+        properties:
+          location:
+            type: string
+            description: City name, optionally "City, Country", e.g. "Shanghai, CN".
+          unit:
+            type: string
+            enum: [celsius, fahrenheit]
+            description: Temperature unit to report.
+        required: [location]
+        additionalProperties: false
+
+  - type: function
+    function:
+      name: get_forecast
+      description: Get a multi-day weather forecast for a single location.
+      parameters:
+        type: object
+        properties:
+          location:
+            type: string
+            description: City name, optionally "City, Country".
+          days:
+            type: integer
+            minimum: 1
+            maximum: 14
+            description: Number of days to forecast.
+          unit:
+            type: string
+            enum: [celsius, fahrenheit]
+            description: Temperature unit to report.
+          include:
+            type: object
+            description: Optional nested selector for which signals to return.
+            properties:
+              precipitation:
+                type: boolean
+              wind:
+                type: boolean
+            additionalProperties: false
+        required: [location, days]
+        additionalProperties: false

@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from tooldrift import _bundled
 from tooldrift.cli import _resolve_fixture, app
 from tooldrift.probe import ProbeError, load_fixture
 
@@ -37,9 +38,11 @@ def test_resolve_fixture_returns_explicit_fixture(tmp_path):
 
 
 def test_resolve_fixture_returns_builtin_for_deepseek():
-    assert _resolve_fixture("deepseek", fixture=None) == Path(
-        "tests/fixtures/deepseek_tool_calls.json"
-    )
+    # Built-in fixtures resolve to the bundled package copy (tooldrift/_data/),
+    # so they work regardless of the process CWD.
+    path = _resolve_fixture("deepseek", fixture=None)
+    assert path == _bundled.builtin_fixture_path("deepseek_tool_calls.json")
+    assert path.is_file()
 
 
 def test_snapshot_no_builtin_provider_exits_2(tmp_path):
