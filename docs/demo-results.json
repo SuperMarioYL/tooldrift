@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "source_revision": "bf7316e7de8ab0ae16a14e31c3af29f400a2ec3f",
+  "scope": "Actual contract regression on bundled offline response fixtures; no live provider requests.",
+  "steps": [
+    {
+      "label": "Recorded run",
+      "body": "Actual contract regression on bundled offline response fixtures; no live provider requests.",
+      "command": ".venv/bin/python examples/presentation_demo.py",
+      "output": "fixture comparison exit: 1\n{\"tool\": \"get_forecast\", \"differing_fields\": [\"arg_keys\", \"arg_nesting:days\", \"arg_nesting:include\", \"arg_nesting:unit\", \"arguments_encoding\", \"tool_call_id_format\", \"finish_reason\"]}\n{\"tool\": \"get_weather\", \"differing_fields\": [\"arguments_encoding\", \"tool_call_id_format\", \"finish_reason\"]}\nScope: bundled offline response fixtures; these are not current provider measurements."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "7f56e6-d06ae7-acb3f6-fbec9757bafa",
+  "identity": "https://github.com/supermarioyl/tooldrift",
+  "primary": "#7f56e6",
+  "secondary": "#d06ae7",
+  "highlight": "#acb3f6",
+  "dark": {
+    "bg": "#060712",
+    "panel": "#0e101f",
+    "code": "#0d0d1d",
+    "ink": "#eef0fd",
+    "muted": "#9d9cc4",
+    "line": "#211841",
+    "primary": "#8963e8",
+    "secondary": "#d06ae7",
+    "highlight": "#acb3f6",
+    "accent": "#8963e8",
+    "buttonStart": "#7f56e6",
+    "buttonEnd": "#a755ba",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#fbf9fe",
+    "panel": "#f9f7fe",
+    "code": "#f6f3fd",
+    "ink": "#191630",
+    "muted": "#5d5e88",
+    "line": "#d8cbf7",
+    "primary": "#7d54e2",
+    "secondary": "#9e51af",
+    "highlight": "#696d96",
+    "accent": "#7d54e2",
+    "buttonStart": "#7f56e6",
+    "buttonEnd": "#a755ba",
+    "buttonText": "#ffffff"
+  }
+}

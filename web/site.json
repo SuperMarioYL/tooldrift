@@ -1,84 +1,216 @@
 {
-  "content_version": "v0.3.0",
-  "schema": 1,
-  "name": "tooldrift",
+  "schema": 3,
+  "name": "ToolDrift",
   "github": "https://github.com/SuperMarioYL/tooldrift",
   "host": "tooldrift.lei6393.com",
-  "lang": { "primary": "zh", "toggle": true },
-  "accent": ["#2dd4bf"],
+  "palette": "auto",
+  "lang": {
+    "primary": "en",
+    "toggle": true
+  },
+  "meta": {
+    "visual_style": "neon-particle",
+    "demo_source": "docs/demo-results.json"
+  },
   "hero": {
-    "eyebrow": { "zh": "离线可跑 · 零 API key · CI 就绪", "en": "Runs offline · zero API key · CI-ready" },
     "headline": {
-      "zh": "把『换完模型才发现工具调坏』\n提前成切换前的一次红灯",
-      "en": "Turn 'tool-calls broke after the swap'\ninto a red light before you switch"
+      "en": "See what changes in a tool-call response",
+      "zh": "看清工具调用响应的变化"
     },
     "sub": {
-      "zh": "用同一份工具套件分别打五家国产模型的 /chat/completions，把每家吐 tool_calls 的形状归一化成契约快照，逐字段比对，漂移即非零退出——直接挂进 CI。",
-      "en": "Send one tool suite to each Chinese model's /chat/completions, normalize every tool_calls shape into a contract snapshot, diff field-by-field, and exit non-zero on drift — drop it straight into CI."
+      "en": "ToolDrift normalizes tool-call responses into snapshots and compares their argument shape, encoding, call count, ID format and finish reason. Use saved responses or a configured probe suite before changing an endpoint.",
+      "zh": "ToolDrift 将工具调用响应归一化为快照，比较参数结构、编码、调用数、ID 格式和结束原因。更换端点前，可使用已保存响应或配置好的探测集合检查差异。"
     },
-    "command": "tooldrift run --old deepseek --new qwen --from-fixtures",
-    "cta": { "zh": "开始使用", "en": "Get started" },
-    "ctaGithub": { "zh": "在 GitHub 查看", "en": "View on GitHub" }
+    "href": "#quickstart"
   },
   "advantages": [
     {
-      "title": { "zh": "切换前红灯，而不是上线后才发现", "en": "A red light before the swap, not a breakage in production" },
-      "body": {
-        "zh": "换模型最怕的是 function-calling 静默坏掉——agent 跑到一半才发现某个工具不调用了。ToolDrift 把这条检测提前到 CI：契约一变就红灯、非零退出，挡住一次有问题的迁移。",
-        "en": "The scariest part of a model swap is function-calling breaking silently — you only find out mid-agent that a tool stopped firing. ToolDrift moves that check into CI: the moment the contract changes, it red-lights and exits non-zero, blocking a bad migration."
+      "title": {
+        "en": "Compare concrete fields",
+        "zh": "比较具体字段"
       },
-      "chips": [
-        "› 逐字段比对 tool_calls 形状",
-        "› 漂移即非零退出码",
-        "› Field-by-field tool_calls diff",
-        "› Non-zero exit on any drift"
-      ]
+      "body": {
+        "en": "Arguments, emitted tools and response metadata remain separate diff entries.",
+        "zh": "参数、出现的工具和响应元数据分别列为差异项。"
+      }
     },
     {
-      "title": { "zh": "精确指出哪一处变了，而不是笼统报错", "en": "Pinpoints the exact field that changed, not a vague failure" },
-      "body": {
-        "zh": "arguments 从 JSON 字符串变成对象、参数键被丢或改名、并行调用数变了、finish_reason 取值不同——每一处漂移都列出字段、旧值→新值、为什么这会让调用方崩。",
-        "en": "arguments flipping from a JSON string to an object, an argument key dropped or renamed, parallel-call count shifting, finish_reason landing on a different value — every drift lists the field, old→new value, and why that breaks a downstream caller."
+      "title": {
+        "en": "Replay without API access",
+        "zh": "无需 API 即可回放"
       },
-      "chips": [
-        "› arguments 编码漂移",
-        "› 参数键 / 类型 / 并行数",
-        "› arguments encoding drift",
-        "› arg keys / types / arity"
-      ]
+      "body": {
+        "en": "Saved snapshots and bundled fixtures can be compared entirely offline.",
+        "zh": "保存的快照和内置样本可完全离线比较。"
+      }
     },
     {
-      "title": { "zh": "零 API key 也能先看到红绿", "en": "See red/green with zero API keys" },
-      "body": {
-        "zh": "拿不到五家的 key 也不卡住：所有命令支持 --from-fixtures，回放离线样本就能演示一次 DeepSeek→通义的契约漂移，十分钟装好即见红绿。",
-        "en": "No keys for all five? Not blocked: every command supports --from-fixtures, replaying offline samples to demo a DeepSeek→Qwen contract drift — install in ten minutes and see red/green."
+      "title": {
+        "en": "Freeze expectations in CI",
+        "zh": "在 CI 固定预期"
       },
-      "chips": [
-        "› --from-fixtures 离线回放",
-        "› 跨五家 Markdown 对比表",
-        "› --from-fixtures offline replay",
-        "› Five-provider Markdown table"
-      ]
-    },
-    {
-      "title": { "zh": "一份契约文件锁定期望，每次回归对账", "en": "Pin the expected contract once, regress every swap against it" },
       "body": {
-        "zh": "在 contract.yaml 里写死期望的 tool_calls 形状，每次切换都把实测契约和它对账；还能输出机器可读的 JSON diff，喂给 CI 和未来的漂移看板。",
-        "en": "Pin the expected tool_calls shape in a contract.yaml and reconcile every swap against it; also emit a machine-readable JSON diff to feed CI and a future drift-watch board."
-      },
-      "chips": [
-        "› contract.yaml 锁定期望契约",
-        "› --format json 机器可读 diff",
-        "› pinned expected-contract regression",
-        "› machine-readable JSON diff"
-      ]
+        "en": "A contract YAML can pin expected tool shapes alongside provider configuration.",
+        "zh": "契约 YAML 可在服务商配置旁固定预期工具结构。"
+      }
     }
   ],
-  "scene": { "kind": "hub-nodes", "nodes": ["DeepSeek", "Qwen", "Kimi", "GLM", "MiniMax"] },
-  "cta": {
-    "headline": { "zh": "下次换模型前，先跑一次", "en": "Before the next model swap, run it once" },
-    "sub": { "zh": "一条命令，把 function-calling 漂移提前成切换前的红灯。", "en": "One command turns function-calling drift into a red light before the switch." },
-    "button": { "zh": "在 GitHub 开始", "en": "Get started on GitHub" }
+  "demo": {
+    "title": {
+      "en": "Run it on a complete example",
+      "zh": "运行完整示例"
+    },
+    "note": {
+      "en": "The script runs the actual CLI with --from-fixtures and --format json, checks exit 1, and summarizes the field differences from the returned ContractDiff. It makes no provider calls.",
+      "zh": "脚本用 --from-fixtures 和 --format json 运行实际 CLI，核对退出码 1，并汇总返回 ContractDiff 的字段差异，不调用服务商。"
+    },
+    "source": "https://github.com/SuperMarioYL/tooldrift/blob/main/docs/demo-results.json",
+    "steps": [
+      {
+        "label": "Recorded run",
+        "body": "Actual contract regression on bundled offline response fixtures; no live provider requests.",
+        "command": ".venv/bin/python examples/presentation_demo.py",
+        "output": "fixture comparison exit: 1\n{\"tool\": \"get_forecast\", \"differing_fields\": [\"arg_keys\", \"arg_nesting:days\", \"arg_nesting:include\", \"arg_nesting:unit\", \"arguments_encoding\", \"tool_call_id_format\", \"finish_reason\"]}\n{\"tool\": \"get_weather\", \"differing_fields\": [\"arguments_encoding\", \"tool_call_id_format\", \"finish_reason\"]}\nScope: bundled offline response fixtures; these are not current provider measurements.",
+        "image": "/assets/presentation/demo-0-light.svg",
+        "imageDark": "/assets/presentation/demo-0-dark.svg"
+      }
+    ]
   },
-  "footer": { "tag": { "zh": "Apache-2.0 · 开源核心，CLI 永久免费", "en": "Apache-2.0 · open core, CLI free forever" } }
+  "quickstart": {
+    "title": {
+      "en": "Try it locally",
+      "zh": "本地上手"
+    },
+    "body": {
+      "en": "The script runs the actual CLI with --from-fixtures and --format json, checks exit 1, and summarizes the field differences from the returned ContractDiff. It makes no provider calls.",
+      "zh": "脚本用 --from-fixtures 和 --format json 运行实际 CLI，核对退出码 1，并汇总返回 ContractDiff 的字段差异，不调用服务商。"
+    },
+    "steps": [
+      {
+        "title": {
+          "en": "Install from source",
+          "zh": "从源码安装"
+        },
+        "code": "git clone https://github.com/SuperMarioYL/tooldrift.git\ncd tooldrift\nuv venv --python 3.12\nsource .venv/bin/activate\nuv pip install -e ."
+      },
+      {
+        "title": {
+          "en": "Run the included example",
+          "zh": "运行随仓示例"
+        },
+        "code": ".venv/bin/python examples/presentation_demo.py"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "en": "A snapshot covers the responses collected for that suite. It is not a guarantee of all future tool calls or all prompt variants.",
+      "zh": "快照仅覆盖该测试集合收集的响应，不能保证未来所有工具调用或提示变体。"
+    },
+    {
+      "en": "Field changes can be acceptable to a tolerant caller. Review the diff against your own parser and tool contract.",
+      "zh": "宽容的调用方可能接受某些字段变化，应结合自身解析器和工具约定审阅差异。"
+    },
+    {
+      "en": "The recorded example is offline fixture replay, not a live five-provider benchmark. Streaming tool-call reassembly is not implemented.",
+      "zh": "记录示例是离线样本回放，不是五家服务商在线基准。流式工具调用重组尚未实现。"
+    }
+  ],
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/presentation/scene-dark.svg",
+    "fallbackLight": "/assets/presentation/scene-light.svg"
+  },
+  "story": {
+    "intro": {
+      "title": {
+        "en": "A concrete task",
+        "zh": "从实际任务出发"
+      },
+      "body": {
+        "en": "Two endpoints can accept the same request while returning arguments in different shapes. A field-level contract diff points directly to the parser or dispatcher assumption that needs review.",
+        "zh": "两个端点可能接受相同请求，却返回不同结构的参数。字段级契约差异能直接指出需要审阅的解析器或分发逻辑假设。"
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "en": "Follow the operation",
+          "zh": "处理过程"
+        },
+        "body": {
+          "en": "A YAML suite defines prompts and tool schemas. Probe loads fixture responses or calls configured chat-completion endpoints. contract.py turns each response into ToolCallShape entries within a ContractSnapshot. diff aligns tools by name and reports field changes; CLI output derives its exit code from any non-equivalence.",
+          "zh": "YAML 测试集合定义提示和工具 Schema。Probe 读取样本响应，或调用已配置的 Chat Completions 端点。contract.py 将响应整理为 ContractSnapshot 中的 ToolCallShape。diff 按名称对齐工具并报告字段变化，CLI 对任意不等价差异返回相应退出码。"
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "en": "Follow the operation",
+            "zh": "处理过程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Probe or replay, normalize, then compare",
+          "zh": "探测或回放，归一化后比较"
+        },
+        "body": {
+          "en": "A YAML suite defines prompts and tool schemas. Probe loads fixture responses or calls configured chat-completion endpoints. contract.py turns each response into ToolCallShape entries within a ContractSnapshot. diff aligns tools by name and reports field changes; CLI output derives its exit code from any non-equivalence.",
+          "zh": "YAML 测试集合定义提示和工具 Schema。Probe 读取样本响应，或调用已配置的 Chat Completions 端点。contract.py 将响应整理为 ContractSnapshot 中的 ToolCallShape。diff 按名称对齐工具并报告字段变化，CLI 对任意不等价差异返回相应退出码。"
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "en": "Probe or replay, normalize, then compare",
+            "zh": "探测或回放，归一化后比较"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Connect the pieces",
+          "zh": "输入与输出"
+        },
+        "body": {
+          "en": "Provider aliases supply endpoint, model and key-environment defaults. The tool does not proxy application traffic or execute the model’s requested tools. Its fixtures are sample response data; their provider labels do not establish current behavior of any service.",
+          "zh": "服务商别名提供端点、模型和密钥环境变量默认值。工具不代理业务流量，也不执行模型请求的工具。内置样本是响应示例数据，样本上的服务商标签不能代表任何服务的当前行为。"
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "en": "Connect the pieces",
+            "zh": "输入与输出"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "en": "Configuration",
+          "zh": "配置"
+        },
+        "body": {
+          "en": "contract.yaml defines version, suite, providers and optional expected tool shapes. Each provider can set base_url, model_id, api_key_env and request quirks. Built-in aliases include deepseek, qwen, kimi, glm and minimax. Before a live run, verify endpoint/model settings and configure the named key variables; dropping --from-fixtures sends billable model requests. Fixture mode refuses incompatible model overrides rather than relabeling saved data.",
+          "zh": "contract.yaml 定义 version、suite、providers 和可选 expected 工具结构。各服务商可设置 base_url、model_id、api_key_env 和请求差异参数。内置别名包含 deepseek、qwen、kimi、glm、minimax。在线运行前需核对端点、模型及密钥变量；去掉 --from-fixtures 会发送可能计费的模型请求。样本模式拒绝不兼容模型覆盖，不会给已保存数据换标签。"
+        }
+      },
+      {
+        "title": {
+          "en": "Further use",
+          "zh": "进一步使用"
+        },
+        "body": {
+          "en": "snapshot writes a reusable JSON contract. diff compares saved files offline. run supports either --old/--new or --contract with optional repeated --base selections. compare-table renders a Markdown comparison for available snapshots. Commands reporting drift intentionally return 1, including warning-class differences; command/input failures are distinct errors.",
+          "zh": "snapshot 写出可复用 JSON 契约，diff 离线比较文件。run 可使用 --old/--new，或 --contract 配合可重复 --base 选择。compare-table 为可用快照生成 Markdown 比较表。报告差异的命令按预期返回 1，包括 warning 类差异；命令或输入失败属于另一类错误。"
+        },
+        "code": ".venv/bin/tooldrift snapshot --base deepseek --from-fixtures -o before.json\n.venv/bin/tooldrift snapshot --base qwen --from-fixtures -o after.json\n.venv/bin/tooldrift diff before.json after.json --format json\n.venv/bin/tooldrift run --contract examples/contract.yaml --base deepseek --base qwen --from-fixtures --format json"
+      }
+    ]
+  },
+  "content_version": "v0.3.0"
 }

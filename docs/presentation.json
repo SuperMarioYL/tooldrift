@@ -1,0 +1,94 @@
+{
+  "name": "ToolDrift",
+  "tagline": "See what changes in a tool-call response",
+  "architecture": {
+    "title": "Probe or replay, normalize, then compare",
+    "nodes": [
+      {
+        "title": "Tool suite",
+        "detail": "prompts and JSON schemas"
+      },
+      {
+        "title": "Probe / fixture",
+        "detail": "response collection"
+      },
+      {
+        "title": "ContractSnapshot",
+        "detail": "normalized tool-call shape"
+      },
+      {
+        "title": "ContractDiff",
+        "detail": "per-field comparison"
+      },
+      {
+        "title": "CI report",
+        "detail": "JSON / table / exit code"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "process": {
+    "title": "From input to a useful result",
+    "steps": [
+      {
+        "title": "Replay responses",
+        "detail": "bundled weather fixtures"
+      },
+      {
+        "title": "Normalize tools",
+        "detail": "get_weather and get_forecast"
+      },
+      {
+        "title": "Compare contracts",
+        "detail": "field-level differences"
+      },
+      {
+        "title": "Signal drift",
+        "detail": "exit 1"
+      }
+    ],
+    "result": "The bundled fixture pair differs in both tools; the real CLI returns the expected drift exit code 1."
+  },
+  "integrations": {
+    "title": "Supported input and output routes",
+    "items": [
+      {
+        "title": "OpenAI-compatible",
+        "detail": "configured chat-completion probes"
+      },
+      {
+        "title": "Saved JSON",
+        "detail": "snapshot and response inputs"
+      },
+      {
+        "title": "Contract YAML",
+        "detail": "providers and pinned expected shapes"
+      },
+      {
+        "title": "JSON diff",
+        "detail": "CI-readable field changes"
+      },
+      {
+        "title": "Markdown table",
+        "detail": "cross-snapshot comparison"
+      }
+    ]
+  }
+}

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "tooldrift"
 version = "0.3.0"
-description = "Per-provider tool-call contract regression sentinel for Chinese LLMs (DeepSeek/Qwen/Kimi/GLM/MiniMax)."
+description = "Snapshot and compare tool-call response contracts across configured LLM endpoints, with offline fixture replay and CI-readable drift reports."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
