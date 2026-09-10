@@ -66,7 +66,13 @@ class Suite:
     @classmethod
     def load(cls, path: str | Path) -> Suite:
         p = Path(path)
-        raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        try:
+            raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError as exc:
+            # Malformed suite YAML must surface as the clean "could not load
+            # suite" error + exit 2, not a raw yaml traceback — mirroring
+            # ContractFile.load's handling of the same error class.
+            raise ProbeError(f"suite {p} is not valid yaml: {exc}") from exc
         if not isinstance(raw, dict):
             raise ProbeError(f"suite {p} did not parse to a mapping")
         return cls(raw, source=str(p))
@@ -126,7 +132,12 @@ def load_fixture(path: str | Path) -> dict[str, Any]:
         # is_file (not exists) so a directory or a missing file both raise a clean
         # ProbeError instead of crashing with IsADirectoryError / FileNotFoundError.
         raise ProbeError(f"fixture not found (expected a JSON file): {p}")
-    return json.loads(p.read_text(encoding="utf-8"))
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        # json.JSONDecodeError: a fixture that is not valid JSON gets the same
+        # clean ProbeError treatment the live path gives a non-JSON 200 body.
+        raise ProbeError(f"fixture {p} is not valid JSON: {exc}") from exc
 
 
 def probe_from_fixture(

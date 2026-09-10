@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-11
+
+Iteration release. Four post-ship defect fixes hardening the CLI's
+clean-error contract — every user-input failure now exits with a one-line
+`error:` message and exit code 2, never a raw traceback or a silent pass.
+All found by reading and probing the shipped v0.3.0 source (the repo ships
+cold: 0 open issues).
+
+### Fixed
+
+- **m8 — unknown provider keys exit cleanly**: `resolve_provider` raises
+  `KeyError` for an unknown provider key, and that exception escaped the CLI
+  as a raw traceback with exit 1 — which is ToolDrift's documented DRIFT code,
+  so a typo'd provider key in a CI script was misreported as contract drift.
+  `tooldrift snapshot --provider openai`, `run --old ... --new notaprovider`,
+  and `compare-table --provider mystery` all crashed this way. The KeyError is
+  now converted to a `ProbeError` at the two resolution sites, so all three
+  commands print the clean one-line error (with the known-providers hint) and
+  exit 2. Covered by `tests/test_cli_clean_errors.py`.
+- **m9 — malformed suite YAML exits cleanly**: `Suite.load` called
+  `yaml.safe_load` unguarded, so a malformed suite file crashed with a raw
+  `yaml.ScannerError` traceback and exit 1 (while the sibling
+  `ContractFile.load` already handled the same error class cleanly).
+  `yaml.YAMLError` is now converted to a clean `ProbeError` ("could not load
+  suite ... not valid yaml") at the owning layer, covering all four CLI
+  commands. Covered by `tests/test_cli_clean_errors.py`.
+- **m10 — a non-JSON fixture file exits cleanly**: `load_fixture` validated
+  the path but called `json.loads` unguarded, so a fixture containing invalid
+  JSON crashed with a raw `json.JSONDecodeError` traceback and exit 1 — the
+  offline twin of the m5 non-JSON-200 fix shipped in v0.3.0. The decode error
+  is now converted to a clean `ProbeError` ("fixture ... is not valid JSON").
+  Covered by `tests/test_cli_clean_errors.py`.
+- **m11 — contract-file run with nothing to compare fails loudly**:
+  `tooldrift run --contract c.yaml --base <single-provider>` where the
+  contract pins no `expected:` block printed NOTHING and exited 0 — an empty
+  diff list meant `_emit_diffs` emitted no output and returned "equivalent".
+  In CI that silent green reads as "contract passed" when zero assertions
+  ran. The run now fails with an actionable error ("nothing to compare: pass
+  at least two --base providers or add an 'expected:' block") and exit 2.
+  Covered by `tests/test_cli_clean_errors.py`.
+
 ## [0.3.0] - 2026-08-29
 
 Iteration release. Three post-ship defect fixes on the documented happy paths,

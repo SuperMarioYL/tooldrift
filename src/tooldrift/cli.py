@@ -67,6 +67,11 @@ class OutputFormat(str, Enum):
     JSON = "json"  # machine-readable ContractDiff JSON to stdout
 
 
+def _key_error_text(exc: KeyError) -> str:
+    """The message text of a KeyError (str() wraps it in repr quotes)."""
+    return str(exc.args[0]) if exc.args else str(exc)
+
+
 def _resolve_fixture(provider: str, fixture: Optional[Path]) -> Path:
     """Resolve the offline fixture path for a provider.
 
@@ -233,7 +238,14 @@ def snapshot(
         err_console.print(f"[red]error:[/] could not load suite {suite}: {exc}")
         raise typer.Exit(code=2)
 
-    resolved = resolve_provider(provider, base_url=base_url, model_id=model_id)
+    # Resolved before the probe try: an unknown provider key (KeyError from the
+    # registry) is a usage error, rendered as the clean one-line error + exit 2
+    # like every other user input problem — never a raw traceback.
+    try:
+        resolved = resolve_provider(provider, base_url=base_url, model_id=model_id)
+    except KeyError as exc:
+        err_console.print(f"[red]error:[/] {_key_error_text(exc)}")
+        raise typer.Exit(code=2)
     effective_model = model_id or resolved.default_model
 
     offline = from_fixtures or fixture is not None
@@ -299,10 +311,16 @@ def _acquire_snapshot(
     ``api_key_env`` overrides over the built-ins). Raises :class:`ProbeError`
     on any failure.
     """
-    if contract is not None:
-        resolved = contract.resolve_provider(provider)
-    else:
-        resolved = resolve_provider(provider, base_url=base_url, model_id=model_id)
+    try:
+        if contract is not None:
+            resolved = contract.resolve_provider(provider)
+        else:
+            resolved = resolve_provider(provider, base_url=base_url, model_id=model_id)
+    except KeyError as exc:
+        # Unknown provider key: convert to ProbeError so every caller's existing
+        # handler prints the clean one-line error + exit 2 instead of letting a
+        # raw KeyError traceback escape the CLI.
+        raise ProbeError(_key_error_text(exc)) from exc
     effective_model = model_id or resolved.default_model
     offline = from_fixtures or fixture is not None
     if offline:
@@ -539,6 +557,17 @@ def _run_contract_mode(
                     new_label="expected/pinned",
                 )
             )
+
+    if not diffs:
+        # A single provider with no pinned expected block compared nothing.
+        # Fail loudly instead of exiting 0 with no output — a silent green
+        # here would read as "contract passed" in CI.
+        err_console.print(
+            "[red]error:[/] nothing to compare: a single provider was probed and "
+            "the contract pins no 'expected' block. Pass at least two --base "
+            "providers or add an 'expected:' block to the contract."
+        )
+        return 2
 
     return _emit_diffs(diffs, fmt, console=console)
 
