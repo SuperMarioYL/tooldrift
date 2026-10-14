@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-15
+
+Iteration release. Six post-ship defect fixes completing the malformed-input
+story v0.3.0/v0.4.0 started (non-JSON input was covered; JSON of the wrong
+SHAPE still crashed with a raw traceback and — worse — exit 1, the documented
+DRIFT code), plus the release pipeline now attaching its build artifacts to
+the GitHub Release. All found by reading and probing the shipped v0.4.0
+source (the repo ships cold: 0 open issues).
+
+### Fixed
+
+- **m12 — structurally-malformed response bodies exit cleanly**: a fixture
+  (or a live HTTP 200 body) containing valid JSON of the wrong shape — an
+  array, a scalar, `choices` as a string, `message` as a string, `tool_calls`
+  entries as strings — crashed with a raw `AttributeError` traceback and
+  exit 1, ToolDrift's documented DRIFT code, so a corrupt fixture in CI
+  misreported as contract drift. The parse layer now raises a named
+  `ProbeError` (body not a JSON object / `choices` not a list / choice or
+  message not a mapping) on both the fixture-replay and live paths, and
+  non-mapping `tool_calls` elements are skipped like unnamed ones. Covered by
+  `tests/test_v050.py`.
+- **m13 — wrong-typed `expected:` blocks exit cleanly**: a contract.yaml
+  pinning e.g. `expected: {get_weather: {parallel_arity: many}}` crashed with
+  a raw pydantic `ValidationError` traceback and exit 1 (drift code) from
+  `_run_contract_mode`. `expected_snapshot` now converts `ValidationError`
+  into `ContractFileError` (mirroring `load`'s YAML handling) and the call
+  site renders the standard one-line error + exit 2. Covered by
+  `tests/test_v050.py`.
+- **m14 — fixture mode now honors its documented model-override refusal**:
+  the README and website document "fixture mode refuses incompatible model
+  overrides rather than relabeling saved data", but no such guard existed —
+  `snapshot --provider deepseek --from-fixtures --model anything` exited 0
+  and stamped `model_id: anything` onto a deepseek-chat fixture's data. An
+  explicit `--model`/`--old-model`/`--new-model` that disagrees with the
+  fixture body's recorded `model` now exits 2 with a named error, and
+  unlabeled replays stamp the body's recorded model so saved data is never
+  relabeled. Covered by `tests/test_v050.py`.
+- **m15 — structurally-malformed suite files exit cleanly**: a suite with
+  `tools: [get_weather]` (bare strings) crashed with a raw `AttributeError`
+  and exit 1, and `messages: hello` was silently coerced into five
+  single-character "messages". `Suite.load` now validates that `messages` and
+  `tools` are lists of mappings and raises a named `ProbeError`. Covered by
+  `tests/test_v050.py`.
+- **m16 — unwritable `--output` targets exit cleanly**: `snapshot -o` /
+  `compare-table -o` pointed at an unwritable path (parent is a file,
+  permission denied) crashed with a raw `OSError` traceback and exit 1. Both
+  write sites now catch `OSError` and print the one-line `error:` + exit 2,
+  closing the last raw-traceback user-input path outside the v0.4.0
+  clean-error contract. Covered by `tests/test_v050.py`.
+- **m17 — the release workflow attaches its artifacts to the GitHub
+  Release**: the release run built sdist + wheel + `checksums.txt` but only
+  parked them in a private workflow artifact, so the v0.4.0 release shipped
+  wheel-only (no sdist, no checksums). A new `publish` job downloads the
+  artifact and `gh release upload`s wheel + sdist + `checksums.txt` on tag
+  push. The v0.5.0 release carries all three.
+
 ## [0.4.0] - 2026-09-11
 
 Iteration release. Four post-ship defect fixes hardening the CLI's

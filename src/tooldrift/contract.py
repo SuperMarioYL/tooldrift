@@ -220,9 +220,13 @@ def shape_from_tool_calls(
     shapes: dict[str, ToolCallShape] = {}
 
     # Bucket raw calls by tool name so parallel_arity is a real count.
+    # Non-mapping entries are skipped (consistent with the no-name tolerance
+    # below) instead of crashing on `.get`.
     by_tool: dict[str, list[dict[str, Any]]] = {}
     for call in tool_calls or []:
-        fn = (call or {}).get("function") or {}
+        if not isinstance(call, dict):
+            continue
+        fn = call.get("function") or {}
         name = fn.get("name")
         if not name:
             continue

@@ -37,6 +37,30 @@ jobs:
           name: dist
           path: dist/*
 
+  # v0.5.0 (m17): attach the built wheel/sdist/checksums to the GitHub Release.
+  # upload-artifact only stores a CI artifact private to the workflow run —
+  # without this job the v0.4.0 release shipped with a wheel only (uploaded
+  # out-of-band) and no sdist or checksums ever reached users.
+  publish:
+    name: attach dist to the GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Attach dist to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+
   # Optional: PyPI trusted publishing. OFF by default so a fresh repo doesn't fail
   # the release run before PyPI is set up. To enable:
   #   1. On pypi.org, add a Trusted Publisher for project "tooldrift":

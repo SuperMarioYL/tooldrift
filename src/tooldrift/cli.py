@@ -257,6 +257,7 @@ def snapshot(
                 provider=provider,
                 model_id=effective_model,
                 suite=loaded_suite,
+                override_model=model_id,
             )
         else:
             api_key = get_api_key(resolved, dict(os.environ))
@@ -273,8 +274,15 @@ def snapshot(
     json_text = snap.to_json()
 
     if output is not None:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json_text, encoding="utf-8")
+        try:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json_text, encoding="utf-8")
+        except OSError as exc:
+            # An unwritable -o target (parent is a file, permission denied) is
+            # a user-input failure: one-line error + exit 2, never a raw
+            # traceback whose exit 1 would read as contract drift in CI.
+            err_console.print(f"[red]error:[/] could not write {output}: {exc}")
+            raise typer.Exit(code=2)
         if not quiet:
             _render_snapshot(snap, console=console)
             console.print(
@@ -330,6 +338,7 @@ def _acquire_snapshot(
             provider=provider,
             model_id=effective_model,
             suite=loaded_suite,
+            override_model=model_id,
         )
     api_key = get_api_key(resolved, dict(os.environ))
     return probe_live(resolved, loaded_suite, api_key=api_key, model_id=model_id)
@@ -546,7 +555,14 @@ def _run_contract_mode(
         a, b = ordered[i], ordered[i + 1]
         diffs.append(diff_snapshots(snapshots[a], snapshots[b]))
 
-    expected_snap = contract.expected_snapshot(suite_name=loaded_suite.name)
+    expected_snap: Optional[ContractSnapshot] = None
+    try:
+        expected_snap = contract.expected_snapshot(suite_name=loaded_suite.name)
+    except ContractFileError as exc:
+        # A pinned expected block with wrong-typed fields is a contract-file
+        # problem: same clean one-line error + exit 2 as a malformed contract.
+        err_console.print(f"[red]error:[/] could not load contract {contract_path}: {exc}")
+        return 2
     if expected_snap is not None:
         for prov in ordered:
             diffs.append(
@@ -637,8 +653,12 @@ def compare_table_cmd(
     )
 
     if output is not None:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(markdown + "\n", encoding="utf-8")
+        try:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(markdown + "\n", encoding="utf-8")
+        except OSError as exc:
+            err_console.print(f"[red]error:[/] could not write {output}: {exc}")
+            raise typer.Exit(code=2)
         console.print(
             Panel.fit(f"comparison table written → [bold]{output}[/]", border_style="green")
         )

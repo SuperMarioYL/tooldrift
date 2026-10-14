@@ -75,6 +75,21 @@ class Suite:
             raise ProbeError(f"suite {p} is not valid yaml: {exc}") from exc
         if not isinstance(raw, dict):
             raise ProbeError(f"suite {p} did not parse to a mapping")
+        # Structural validation: Suite.__init__ would silently coerce a
+        # non-list `messages` (list("hello") -> chars) and a non-mapping
+        # `tools` entry would only crash later in tool_names, far from the
+        # load site. Name the problem here, once, for every consumer.
+        for field in ("messages", "tools"):
+            value = raw.get(field)
+            if value is None:
+                continue
+            if not isinstance(value, list) or any(
+                not isinstance(entry, dict) for entry in value
+            ):
+                raise ProbeError(
+                    f"suite {p}: '{field}' must be a list of mappings, "
+                    f"got {type(value).__name__}"
+                )
         return cls(raw, source=str(p))
 
 
@@ -87,13 +102,32 @@ def _extract_tool_calls(response_json: dict[str, Any]) -> tuple[list[dict[str, A
     """Pull ``tool_calls`` + ``finish_reason`` out of a /chat/completions body.
 
     Tolerant of the small shape variations seen across providers: tool_calls may
-    sit on the message, and finish_reason on the choice.
+    sit on the message, and finish_reason on the choice. A body whose nested
+    fields are the WRONG types entirely (choices not a list, choice/message not
+    a mapping) is not a small variation — it raises a clean ProbeError naming
+    the offending field instead of an AttributeError escape.
     """
     choices = response_json.get("choices") or []
+    if not isinstance(choices, list):
+        raise ProbeError(
+            f"response body has an unexpected shape: 'choices' is "
+            f"{type(choices).__name__}, expected a list"
+        )
     if not choices:
         return [], response_json.get("finish_reason", "") or ""
-    choice = choices[0] or {}
-    message = choice.get("message") or {}
+    choice = choices[0]
+    if not isinstance(choice, dict):
+        raise ProbeError(
+            f"response body has an unexpected shape: choices[0] is "
+            f"{type(choice).__name__}, expected a mapping"
+        )
+    message = choice.get("message")
+    if message is not None and not isinstance(message, dict):
+        raise ProbeError(
+            f"response body has an unexpected shape: 'message' is "
+            f"{type(message).__name__}, expected a mapping"
+        )
+    message = message or {}
     tool_calls = message.get("tool_calls") or []
     if not isinstance(tool_calls, list):
         tool_calls = []
@@ -110,6 +144,14 @@ def snapshot_from_response(
     known_tools: list[str] | None = None,
 ) -> ContractSnapshot:
     """Build a normalized snapshot from a raw /chat/completions response body."""
+    if not isinstance(response_json, dict):
+        # Valid JSON but not an object (an array, scalar, string — all legal
+        # JSON). Both the fixture-replay and the live path funnel here, and a
+        # provider/gateway can return HTTP 200 with such a body, so this is a
+        # named ProbeError, never an AttributeError escape.
+        raise ProbeError(
+            f"response body is not a JSON object: {str(response_json)[:120]}"
+        )
     tool_calls, finish_reason = _extract_tool_calls(response_json)
     shapes = shape_from_tool_calls(tool_calls, finish_reason, known_tools=known_tools)
     return ContractSnapshot(
@@ -146,13 +188,33 @@ def probe_from_fixture(
     provider: str,
     model_id: str,
     suite: Suite,
+    override_model: str | None = None,
 ) -> ContractSnapshot:
-    """Build a snapshot from a saved response instead of a live call."""
+    """Build a snapshot from a saved response instead of a live call.
+
+    ``override_model`` carries the RAW model override the user passed on the
+    CLI (``--model`` / ``--old-model`` / ``--new-model``), distinct from the
+    resolved default in ``model_id``. When it disagrees with the model recorded
+    in the fixture body, the replay is refused: the snapshot's contract binds
+    to a model version, and relabeling saved data with a version that never
+    produced it would silently poison every diff it feeds (the behavior the
+    README documents as "fixture mode refuses incompatible model overrides").
+    When no override was passed, the snapshot is labeled with the body's
+    recorded model (falling back to ``model_id`` for bodies without one), so
+    saved data is never relabeled.
+    """
     body = load_fixture(fixture_path)
+    recorded = body.get("model") if isinstance(body, dict) else None
+    if override_model and recorded and override_model != recorded:
+        raise ProbeError(
+            f"fixture {fixture_path} recorded model '{recorded}' but --model "
+            f"'{override_model}' was requested — fixture mode refuses "
+            f"incompatible model overrides rather than relabeling saved data."
+        )
     return snapshot_from_response(
         body,
         provider=provider,
-        model_id=model_id,
+        model_id=override_model or recorded or model_id,
         suite_name=suite.name,
         known_tools=suite.tool_names,
     )

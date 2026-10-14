@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tooldrift"
-version = "0.4.0"
+version = "0.5.0"
 description = "Snapshot and compare tool-call response contracts across configured LLM endpoints, with offline fixture replay and CI-readable drift reports."
 readme = "README.md"
 requires-python = ">=3.12"

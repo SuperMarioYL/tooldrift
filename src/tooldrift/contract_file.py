@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import ValidationError
 
 from .contract import ContractSnapshot, ToolCallShape
 from .providers import Provider, resolve_provider
@@ -139,7 +140,18 @@ class ContractFile:
         allowed = set(ToolCallShape.model_fields.keys())
         for tool_name, shape_raw in self.expected.items():
             clean = {k: v for k, v in shape_raw.items() if k in allowed}
-            tools[tool_name] = ToolCallShape(**clean)
+            try:
+                tools[tool_name] = ToolCallShape(**clean)
+            except ValidationError as exc:
+                # A pinned expected block with wrong-typed fields (e.g.
+                # parallel_arity: many) is a contract-file problem, not a
+                # crash: convert to ContractFileError so the CLI renders the
+                # standard one-line error + exit 2, mirroring how load()
+                # handles YAMLError.
+                raise ContractFileError(
+                    f"contract {self.source}: expected tool '{tool_name}' does "
+                    f"not match the ToolCallShape schema: {exc}"
+                ) from exc
         return ContractSnapshot(
             provider="expected",
             model_id="expected",
