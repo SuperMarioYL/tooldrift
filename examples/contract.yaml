@@ -24,6 +24,12 @@ providers:
     base_url: https://api.deepseek.com/v1
     model_id: deepseek-chat
     api_key_env: DEEPSEEK_API_KEY
+    # Optional: extra request-body fields merged over the built-in request for
+    # this provider (e.g. a gateway that rejects the suite's default
+    # tool_choice). Unknown or wrong-typed provider keys are rejected, not
+    # silently ignored.
+    # request_quirks:
+    #   tool_choice: required
 
   qwen:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1

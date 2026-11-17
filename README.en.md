@@ -84,7 +84,7 @@ The existing recording is retained for context; the text example above documents
 
 ## Usage
 
-snapshot writes a reusable JSON contract. diff compares saved files offline. run supports either --old/--new or --contract with optional repeated --base selections. compare-table renders a Markdown comparison for available snapshots. Commands reporting drift intentionally return 1, including warning-class differences; command/input failures are distinct errors.
+snapshot writes a reusable JSON contract. diff compares saved files offline. run supports either --old/--new or --contract with optional repeated --base selections. compare-table renders a Markdown comparison for available snapshots. Commands reporting drift intentionally return 1, including warning-class differences; command/input failures are distinct errors (exit 2), and a comparison with no tools on either side also exits 2.
 
 ```bash
 .venv/bin/tooldrift snapshot --base deepseek --from-fixtures -o before.json
@@ -95,7 +95,7 @@ snapshot writes a reusable JSON contract. diff compares saved files offline. run
 
 ## Configuration
 
-contract.yaml defines version, suite, providers and optional expected tool shapes. Each provider can set base_url, model_id, api_key_env and request quirks. Built-in aliases include deepseek, qwen, kimi, glm and minimax. Before a live run, verify endpoint/model settings and configure the named key variables; dropping --from-fixtures sends billable model requests. Fixture mode refuses incompatible model overrides rather than relabeling saved data.
+contract.yaml defines version, suite, providers and optional expected tool shapes. Each provider can set base_url, model_id, api_key_env and request_quirks (merged into the request body); unknown or wrong-typed fields are rejected instead of silently ignored. Built-in aliases include deepseek, qwen, kimi, glm and minimax. Before a live run, verify endpoint/model settings and configure the named key variables; dropping --from-fixtures sends billable model requests. Fixture mode skips only providers without a bundled fixture, treats every other probe failure as an input error, and refuses incompatible model overrides rather than relabeling saved data.
 
 ## Integrations and responsibilities
 

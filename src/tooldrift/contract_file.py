@@ -30,16 +30,25 @@ class ContractFileError(RuntimeError):
     """Raised when a contract.yaml cannot be loaded or is malformed."""
 
 
+#: Keys a provider block may set. Anything else is a typo that would otherwise
+#: be dropped silently — and a dropped key changes what gets probed.
+_PROVIDER_STRING_FIELDS = ("base_url", "model_id", "api_key_env")
+_PROVIDER_FIELDS = (*_PROVIDER_STRING_FIELDS, "request_quirks")
+
+
 @dataclass
 class ProviderOverride:
     """Per-provider overrides declared in a contract file.
 
     Any field left ``None`` falls back to the built-in provider defaults.
+    ``request_quirks`` are extra request-body fields merged over the built-ins
+    (e.g. a gateway that needs ``tool_choice: required``).
     """
 
     base_url: str | None = None
     model_id: str | None = None
     api_key_env: str | None = None
+    request_quirks: dict[str, Any] | None = None
 
 
 @dataclass
@@ -78,22 +87,55 @@ class ContractFile:
                 raise ContractFileError(
                     f"contract {p}: provider '{key}' must be a mapping"
                 )
+            # Strict keys/types: a typo such as `base_urls:`/`model:` used to be
+            # dropped silently (probe fell back to the registry defaults), and a
+            # non-string value crashed later in probe_live with an AttributeError
+            # and exit 1 — ToolDrift's documented DRIFT code.
+            unknown = sorted(str(k) for k in set(spec) - set(_PROVIDER_FIELDS))
+            if unknown:
+                raise ContractFileError(
+                    f"contract {p}: provider '{key}' has unknown field(s): "
+                    f"{', '.join(unknown)}; supported: {', '.join(_PROVIDER_FIELDS)}"
+                )
+            for field_name in _PROVIDER_STRING_FIELDS:
+                value = spec.get(field_name)
+                if value is not None and not isinstance(value, str):
+                    raise ContractFileError(
+                        f"contract {p}: provider '{key}' field '{field_name}' must be a "
+                        f"string, got {type(value).__name__}"
+                    )
+            quirks = spec.get("request_quirks")
+            if quirks is not None and not isinstance(quirks, dict):
+                raise ContractFileError(
+                    f"contract {p}: provider '{key}' field 'request_quirks' must be a "
+                    f"mapping, got {type(quirks).__name__}"
+                )
             providers[key] = ProviderOverride(
                 base_url=spec.get("base_url"),
                 model_id=spec.get("model_id"),
                 api_key_env=spec.get("api_key_env"),
+                request_quirks=dict(quirks) if quirks else None,
             )
 
         expected_raw = raw.get("expected")
         if expected_raw is not None:
             if not isinstance(expected_raw, dict):
                 raise ContractFileError(f"contract {p}: 'expected' must be a mapping")
-            # Normalise each tool's expected block to a plain dict for shape_from.
+            allowed_fields = set(ToolCallShape.model_fields)
             expected: dict[str, dict[str, Any]] = {}
             for tool_name, shape in expected_raw.items():
                 if not isinstance(shape, dict):
                     raise ContractFileError(
                         f"contract {p}: expected tool '{tool_name}' must be a mapping"
+                    )
+                # A misspelled field would otherwise be filtered out and the
+                # assertion would silently stop running (a false PASS).
+                unknown = sorted(str(k) for k in set(shape) - allowed_fields)
+                if unknown:
+                    raise ContractFileError(
+                        f"contract {p}: expected tool '{tool_name}' has unknown "
+                        f"field(s): {', '.join(unknown)}; supported: "
+                        f"{', '.join(sorted(allowed_fields))}"
                     )
                 expected[tool_name] = dict(shape)
         else:
@@ -123,6 +165,7 @@ class ContractFile:
             base_url=override.base_url,
             model_id=override.model_id,
             api_key_env=override.api_key_env,
+            request_quirks=override.request_quirks,
         )
 
     def expected_snapshot(self, *, suite_name: str = "") -> ContractSnapshot | None:
@@ -136,12 +179,10 @@ class ContractFile:
         if not self.expected:
             return None
         tools: dict[str, ToolCallShape] = {}
-        # Only keep keys ToolCallShape actually carries (extra="forbid" rejects extras).
-        allowed = set(ToolCallShape.model_fields.keys())
+        # load() already rejected unknown keys, so nothing is dropped here.
         for tool_name, shape_raw in self.expected.items():
-            clean = {k: v for k, v in shape_raw.items() if k in allowed}
             try:
-                tools[tool_name] = ToolCallShape(**clean)
+                tools[tool_name] = ToolCallShape(**shape_raw)
             except ValidationError as exc:
                 # A pinned expected block with wrong-typed fields (e.g.
                 # parallel_arity: many) is a contract-file problem, not a

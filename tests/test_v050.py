@@ -1,4 +1,4 @@
-"""v0.5.0 regressions (m12–m17) + the single-source-of-truth version lockstep.
+"""v0.5.0 regressions (m12–m17).
 
 m12 — a response body that is valid JSON but the wrong SHAPE (array, scalar,
 `choices`/`message` not the expected types) must exit as a clean named error
@@ -25,7 +25,6 @@ import httpx
 import pytest
 from typer.testing import CliRunner
 
-import tooldrift
 from tooldrift.cli import app
 from tooldrift.probe import ProbeError, Suite, probe_live
 from tooldrift.providers import Provider
@@ -398,17 +397,5 @@ def test_compare_table_unwritable_output_exits_clean(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# version lockstep (single source of truth across surfaces)                     #
+# version lockstep moved to the current version's test module (test_v060.py)    #
 # --------------------------------------------------------------------------- #
-
-
-def test_version_lockstep_v050():
-    """Every version surface asserts 0.5.0 so a partial bump fails CI."""
-    assert tooldrift.__version__ == "0.5.0"
-    assert (ROOT / "VERSION").read_text(encoding="utf-8").strip() == "0.5.0"
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'version = "0.5.0"' in pyproject
-    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert "## [0.5.0]" in changelog
-    site = json.loads((ROOT / "web" / "site.json").read_text(encoding="utf-8"))
-    assert site["content_version"] == "v0.5.0"

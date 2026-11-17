@@ -72,13 +72,25 @@ def _key_error_text(exc: KeyError) -> str:
     return str(exc.args[0]) if exc.args else str(exc)
 
 
+class _NoBuiltinFixture(ProbeError):
+    """No bundled fixture exists for this provider in fixture mode.
+
+    This is the ONLY reason the aggregate commands skip a provider in fixture
+    mode. Keeping it distinct from :class:`ProbeError` means an unknown provider
+    key or an unreadable fixture fails the run instead of disappearing from a
+    green report.
+    """
+
+
 def _resolve_fixture(provider: str, fixture: Optional[Path]) -> Path:
     """Resolve the offline fixture path for a provider.
 
-    Raises :class:`ProbeError` cleanly when no ``--fixture`` is given AND the
-    provider has no built-in fixture (kimi/glm/minimax etc.) — so the user gets
-    the documented "no built-in fixture" message + exit 2 instead of an
-    ``IsADirectoryError`` crash. Shared by ``snapshot``/``run``/``compare-table``
+    Raises :class:`_NoBuiltinFixture` (a :class:`ProbeError`) cleanly when no
+    ``--fixture`` is given AND the provider has no built-in fixture
+    (kimi/glm/minimax etc.) — so the user gets the documented "no built-in
+    fixture" message + exit 2 instead of an ``IsADirectoryError`` crash, and the
+    aggregate commands can skip exactly this case while every other probe
+    failure still fails the run. Shared by ``snapshot``/``run``/``compare-table``
     so the three paths can never diverge again. Built-in fixtures resolve
     through the package bundler so they work from any CWD.
     """
@@ -86,7 +98,7 @@ def _resolve_fixture(provider: str, fixture: Optional[Path]) -> Path:
         return fixture
     filename = _FIXTURES.get(provider)
     if not filename:
-        raise ProbeError(
+        raise _NoBuiltinFixture(
             f"no built-in fixture for provider '{provider}'. "
             f"Pass --fixture PATH. Built-in fixtures: {', '.join(_FIXTURES)}."
         )
@@ -107,6 +119,13 @@ def _emit_diffs(
     code is driven by *any* drift across all emitted diffs (0 equivalent, 1
     drift) regardless of format.
     """
+    if not any(diff_result.tools for diff_result in diffs):
+        # Zero tools on every compared pair means zero assertions ran. Exiting 0
+        # here would read as a green "contract passed" in CI (the m11 rationale).
+        err_console.print(
+            "[red]error:[/] nothing to compare: the compared snapshots contain no tools."
+        )
+        return 2
     if fmt is OutputFormat.JSON:
         if len(diffs) == 1:
             payload: object = diffs[0].model_dump(mode="json")
@@ -534,12 +553,13 @@ def _run_contract_mode(
                 from_fixtures=from_fixtures,
                 contract=contract,
             )
+        except _NoBuiltinFixture as exc:
+            # The one documented fixture-mode skip: this provider has no bundled
+            # fixture. Every other ProbeError (unknown provider key, unreadable
+            # fixture) is a real input error and must fail the run.
+            err_console.print(f"[dim]skip {prov}: {exc}[/]")
+            continue
         except ProbeError as exc:
-            # In fixture mode a provider without a fixture is expected — skip it
-            # rather than failing the whole run (mirrors compare-table).
-            if from_fixtures:
-                err_console.print(f"[dim]skip {prov}: {exc}[/]")
-                continue
             err_console.print(f"[red]error:[/] {exc}")
             return 2
 
@@ -609,7 +629,7 @@ def compare_table_cmd(
     from_fixtures: bool = typer.Option(
         False,
         "--from-fixtures",
-        help="Use offline fixtures where available (providers without one are shown as —).",
+        help="Use offline fixtures where available (providers without a bundled one are skipped).",
     ),
 ) -> None:
     """Emit a shareable Markdown table comparing tool_calls schema across providers.
@@ -633,12 +653,12 @@ def compare_table_cmd(
             snapshots[prov] = _acquire_snapshot(
                 prov, loaded_suite, model_id=None, base_url=None, from_fixtures=from_fixtures
             )
+        except _NoBuiltinFixture as exc:
+            # Same rule as contract mode: skip only providers with no bundled
+            # fixture; a typo'd provider key or a bad fixture path fails loudly.
+            err_console.print(f"[dim]skip {prov}: {exc}[/]")
+            continue
         except ProbeError as exc:
-            # In fixture mode a provider without a fixture is expected — skip its
-            # column rather than failing the whole table.
-            if from_fixtures:
-                err_console.print(f"[dim]skip {prov}: {exc}[/]")
-                continue
             err_console.print(f"[red]error:[/] {exc}")
             raise typer.Exit(code=2)
 

@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-18
+
+Iteration release. Three defect fixes and one hardening change on the
+contract-file and fixture-mode paths, plus the documented per-provider
+`request_quirks` block actually working. All found by reading and probing the
+shipped v0.5.0 source (the repo ships cold: 0 open issues, no feature
+requests).
+
+### Fixed
+
+- **m18 — fixture mode skips only providers with no bundled fixture**:
+  `compare-table`/`run --contract` skipped a provider on ANY `ProbeError`
+  whenever `--from-fixtures` was set, so
+  `compare-table -p deepseek -p notaprovider --from-fixtures` printed a dim
+  "skip" line, rendered a one-column table and exited 0 — a typo'd provider
+  reported as a clean comparison. The skip is now a dedicated
+  `_NoBuiltinFixture` raised only when the provider has no bundled fixture;
+  unknown provider keys and unreadable fixtures take the standard one-line
+  `error:` + exit 2 path. Covered by `tests/test_v060.py`.
+- **m19 — wrong-typed provider overrides in contract.yaml exit cleanly**: a
+  provider block with `base_url: 123` reached `probe_live` and raised a raw
+  `AttributeError` (`'int' object has no attribute 'rstrip'`) with exit 1 —
+  the documented DRIFT code — for a config-file error. `ContractFile.load`
+  now requires `base_url`/`model_id`/`api_key_env` to be strings and raises a
+  named `ContractFileError`, which the CLI renders as `error:` + exit 2.
+  Covered by `tests/test_v060.py`.
+- **m20 — unknown contract keys are rejected instead of dropped**: unknown
+  keys in a provider block (e.g. `base_urls:`, `model:`) were silently
+  ignored, so the provider quietly fell back to registry defaults; a
+  misspelled field in a pinned `expected` block silently stopped being
+  asserted, so the contract reported PASS while that assertion never ran.
+  Both are now load-time errors naming the unknown key and the supported set.
+  Covered by `tests/test_v060.py`.
+
+### Changed
+
+- **m21 — a zero-tool comparison is not certified green**: diffing two
+  snapshots that contain no tools rendered "PASS — ... 0 tool(s)" and exited
+  0, so a CI gate saw green with zero assertions. Every diff/run path now
+  exits 2 with a nothing-to-compare error in that case.
+- **m22 — contract.yaml honors per-provider `request_quirks`**: both READMEs
+  documented that a provider can set request quirks, but the contract loader
+  had no such field. `providers.<key>.request_quirks` now merges over the
+  built-in request body (e.g. `tool_choice: required` for a gateway that
+  demands it); a non-mapping value is a load-time error.
+
 ## [0.5.0] - 2026-10-15
 
 Iteration release. Six post-ship defect fixes completing the malformed-input

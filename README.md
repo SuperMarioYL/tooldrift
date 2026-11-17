@@ -84,7 +84,7 @@ Scope: bundled offline response fixtures; these are not current provider measure
 
 ## 用法
 
-snapshot 写出可复用 JSON 契约，diff 离线比较文件。run 可使用 --old/--new，或 --contract 配合可重复 --base 选择。compare-table 为可用快照生成 Markdown 比较表。报告差异的命令按预期返回 1，包括 warning 类差异；命令或输入失败属于另一类错误。
+snapshot 写出可复用 JSON 契约，diff 离线比较文件。run 可使用 --old/--new，或 --contract 配合可重复 --base 选择。compare-table 为可用快照生成 Markdown 比较表。报告差异的命令按预期返回 1，包括 warning 类差异；命令或输入失败属于另一类错误（退出 2），两侧都没有可比工具时同样退出 2。
 
 ```bash
 .venv/bin/tooldrift snapshot --base deepseek --from-fixtures -o before.json
@@ -95,7 +95,7 @@ snapshot 写出可复用 JSON 契约，diff 离线比较文件。run 可使用 -
 
 ## 配置
 
-contract.yaml 定义 version、suite、providers 和可选 expected 工具结构。各服务商可设置 base_url、model_id、api_key_env 和请求差异参数。内置别名包含 deepseek、qwen、kimi、glm、minimax。在线运行前需核对端点、模型及密钥变量；去掉 --from-fixtures 会发送可能计费的模型请求。样本模式拒绝不兼容模型覆盖，不会给已保存数据换标签。
+contract.yaml 定义 version、suite、providers 和可选 expected 工具结构。各服务商可设置 base_url、model_id、api_key_env 和 request_quirks（合并进请求体）；未知字段或类型不符会直接报错，不会被静默忽略。内置别名包含 deepseek、qwen、kimi、glm、minimax。在线运行前需核对端点、模型及密钥变量；去掉 --from-fixtures 会发送可能计费的模型请求。样本模式只跳过没有内置样本的服务商，其他探测错误按输入错误退出；样本模式拒绝不兼容模型覆盖，不会给已保存数据换标签。
 
 ## 集成与职责分工
 

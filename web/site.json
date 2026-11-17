@@ -50,8 +50,8 @@
         "zh": "在 CI 固定预期"
       },
       "body": {
-        "en": "A contract YAML can pin expected tool shapes alongside provider configuration.",
-        "zh": "契约 YAML 可在服务商配置旁固定预期工具结构。"
+        "en": "A contract YAML pins expected tool shapes alongside provider settings; unknown or wrong-typed fields are rejected instead of silently ignored.",
+        "zh": "契约 YAML 在服务商配置旁固定预期工具结构；未知或类型不符的字段会直接报错，不会被静默忽略。"
       }
     }
   ],
@@ -224,5 +224,5 @@
       }
     ]
   },
-  "content_version": "v0.5.0"
+  "content_version": "v0.6.0"
 }
